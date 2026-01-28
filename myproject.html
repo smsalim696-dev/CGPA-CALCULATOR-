@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CGPA Calculator</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            margin: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        #calculator {
+            background-color: #ffffff;
+            padding: 25px;
+            width: 500px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 12px 20px;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button.delete {
+            background-color: #d9534f;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .error {
+            color: #d9534f;
+            font-size: 15px;
+        }
+
+        #cgpa {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4caf50;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="calculator">
+    <span id="error" class="error"></span>
+
+    <h2>CGPA Calculator</h2>
+
+    <label>Subject</label>
+    <input type="text" id="subject">
+
+    <label>Grade</label>
+    <select id="grade">
+        <option>S</option>
+        <option>A</option>
+        <option>B</option>
+        <option>C</option>
+        <option>D</option>
+        <option>F</option>
+    </select>
+
+    <label>Credit (Decimal allowed)</label>
+    <input type="number" id="credit" step="0.1" min="0.5">
+
+    <button onclick="addSubject()">Add / Edit Subject</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Grade</th>
+                <th>Credit</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="subjectList"></tbody>
+    </table>
+
+    <h3>CGPA: <span id="cgpa">0.00</span></h3>
+
+    <button onclick="calculateCGPA()">Calculate CGPA</button>
+    <button onclick="resetForm()">Reset</button>
+</div>
+
+<script>
+    let subjects = [];
+    let editIndex = -1;
+
+    function addSubject() {
+        const subject = document.getElementById("subject").value.trim();
+        const grade = document.getElementById("grade").value;
+        const credit = parseFloat(document.getElementById("credit").value);
+        const error = document.getElementById("error");
+
+        error.textContent = "";
+
+        if (!subject || isNaN(credit)) {
+            error.textContent = "Please fill all fields correctly.";
+            return;
+        }
+
+        if (credit <= 0 || credit > 20) {
+            error.textContent = "Credit must be between 0.5 and 20.";
+            return;
+        }
+
+        if (editIndex === -1) {
+            subjects.push({ subject, grade, credit });
+        } else {
+            subjects[editIndex] = { subject, grade, credit };
+            editIndex = -1;
+        }
+
+        displaySubjects();
+        clearForm();
+    }
+
+    function displaySubjects() {
+        const list = document.getElementById("subjectList");
+        list.innerHTML = "";
+
+        subjects.forEach((s, i) => {
+            list.innerHTML += `
+                <tr>
+                    <td>${s.subject}</td>
+                    <td>${s.grade}</td>
+                    <td>${s.credit}</td>
+                    <td>
+                        <button onclick="editSubject(${i})">Edit</button>
+                        <button class="delete" onclick="deleteSubject(${i})">Delete</button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    function editSubject(i) {
+        document.getElementById("subject").value = subjects[i].subject;
+        document.getElementById("grade").value = subjects[i].grade;
+        document.getElementById("credit").value = subjects[i].credit;
+        editIndex = i;
+    }
+
+    function deleteSubject(i) {
+        subjects.splice(i, 1);
+        displaySubjects();
+        calculateCGPA();
+    }
+
+    function calculateCGPA() {
+        let totalCredits = 0;
+        let totalPoints = 0;
+
+        subjects.forEach(s => {
+            totalCredits += s.credit;
+            totalPoints += getGradePoint(s.grade) * s.credit;
+        });
+
+        const cgpa = totalCredits === 0 ? 0 : (totalPoints / totalCredits).toFixed(2);
+        document.getElementById("cgpa").textContent = cgpa;
+    }
+
+    function getGradePoint(grade) {
+        return { S: 10, A: 9, B: 8, C: 7, D: 6, F: 0 }[grade];
+    }
+
+    function clearForm() {
+        document.getElementById("subject").value = "";
+        document.getElementById("grade").value = "A";
+        document.getElementById("credit").value = "";
+    }
+
+    function resetForm() {
+        subjects = [];
+        editIndex = -1;
+        displaySubjects();
+        document.getElementById("cgpa").textContent = "0.00";
+        clearForm();
+    }
+</script>
+
+</body>
+</html>
